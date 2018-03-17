@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>FAROS MAP 1.0.0 - created by V. Marquart</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='./assets/mapbox-gl.js'></script>
+    <link href="./assets/mapbox-gl.css" rel='stylesheet' />
+    <script src='./assets/mapbox-gl-geocoder.min.js'></script>
+    <link rel='stylesheet' href='./assets/mapbox-gl-geocoder.css' type='text/css' />
+
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+
+    </style>
+</head>
+<body>
+
+<style>
+    .calculation-box {
+        height: 25px;
+        width: 70px;
+        background-color: #fff;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.10);
+        border-radius: 3px;
+        position: absolute;
+        bottom: 40px;
+        left: 10px;
+        padding: 15px;
+        text-align: center;
+        display: none;
+        p{
+          font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+        }
+    }
+
+    p {
+        font-family: 'Open Sans';
+        margin: 0;
+        font-size: 13px;
+    }
+    .map-overlay {
+      font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+      background-color: #fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.10);
+      border-radius: 3px;
+      position: absolute;
+      width: 25%;
+      top: 10px;
+      left: 10px;
+      padding: 10px;
+      display: none;
+    }
+    .inlineText {
+      display:inline;!important;
+    }
+
+   .btn-gk25 {
+      background-size: contain;
+      background-size: 65% auto;
+      background-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAbrwAAG68BXhqRHAAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAANbSURBVGiB7dk9iFxVFAfw38RI3LggMUQhsfQTUQgWkTgpRBQsFEVjaeUHIiraqBjE0tZS7CwsbCyMNoJiTFjwY4l2STC7QogGNrJZ40fMbtbi3ufOvrz37p3Jm5kt5g8HZubdc8//3Y//uecOE0wwQduYwvOYxWq02fjbNWPklcRNeA/nrBEv27nYZueYOFbiTnyIC+qJl+2f6HP7GPj+j0fwBS7JJ162FXyKe0dFejOetn59t2WHhUHpDIP4tXgFJ4dAvGw/CYN0dRvEdwqbbnEExMv2K97BdYMQv0P/G3NYVijXrlzyL+DfDUC8bIu4P0W+YzzLJde+LBPeVPq+ij9SbzlGLOU0ehALxj/aZTuOW3LfdIsgZcc2APEZIT+UV0sWNkXn70ZM+pKQobuDkK57kSfx/UYjnjstq/hT0ORhooPt2GHAJVNGcYT42ejX/jxeN2Amvh5v4nQiyLfYj7f1p1wL0Wd/7KOp7W94K3LKwgPSyewrQW57MY3XcKrB7xReFWa2Fw/FPptiZmVi+Lqmg2KD7U34b8Gz1h+5f8Az8VkT9uKg+hrjsky8uaKTumy3Imzi8wkSF/BBtKn4298JnwLnY4yVPrmtw21C1muSuoPYl0kqB/vwmebq7pg+MnGRwI40dLiKo0LGrhqtFIrq7mgiRlGpDSyrXXyM5YYgJwW5narpoxdT0tXdcozZWiaG3fgIFxsCz+MlbK3w34qXY5s6/4sxxu42icNVgmYfbgjea0vWqqhd8fNSpm+rxX0x3Scyg7dpJ2LsgW7zpqPzXCLILJ4SDnozfZCbwRPRN3VFMycsvelc8jkFzSE87PJp7uITQcfLPivx2X0ln07s61Ai5gIey3mBuvNPof85ynAr3hXW8zfxc46GdzVn4rmyQ1m/O6oVhDCCi/Ky4XG8kdGujCXNmfhsTicvql4C5ZkYdSY+jT25Hd4tXGyl7oeOGFzyOnhUOtvPC4KSvYl7sUO43ktt6rYzcW8+aK0ye076luKM8MLbKvrYFp+dafBfFmb+njZIV6E45KU0v99M/Fdsc/OwiFehKxQ4V/IHx1lhVm4YJfEy7sL7QtGSS/wXV7Axh4UbhdH8XT3x4hKglT8vhoXtOIAfBRlexOd4XEuKMsEEE6zhPxE9ST5bvtbVAAAAAElFTkSuQmCC');
+      background-color:red;!important;
+
+  }
+
+</style>
+
+<script src='./assets/turf.min.js'></script>
+<script src='./assets/mapbox-gl-draw.js'></script>
+<link rel='stylesheet' href='./assets/mapbox-gl-draw.css' type='text/css'/>
+<div id='map'></div>
+
+<div id='map-overlay' class='map-overlay'></div>
+
+<div id='calculationbox' class='calculation-box'>
+    <div id='calculated-area'></div>
+</div>
+
+<script>
+mapboxgl.accessToken = 'pk.eyJ1Ijoidm1hcnF1YXIiLCJhIjoiY2plMzBkdnZvMjJiYjJybzZ5Zzl6dms3MSJ9.ijaJUtLNCCERM61Xa_DvYQ';
+/* eslint-disable */
+var map = new mapboxgl.Map({
+    container: 'map', // container id
+    style: 'mapbox://styles/vmarquar/cjeeah5yvnly22snu5i78bgfu', //hosted style id
+    center: [11.8,50.3], // starting position
+    zoom: 10 // starting zoom
+});
+
+var gks = [
+            {"id": "gk56",
+            "url": 'vmarquar.arur11qh'},
+            {"id": "gk57",
+            "url": 'vmarquar.d700b19o'},
+            {"id": "gk58",
+            "url": 'vmarquar.daojyxgq'},
+            {"id": "gk59",
+            "url": 'vmarquar.53zpo4cy'},
+            {"id": "gk60",
+            "url": 'vmarquar.53avruao'},
+            {"id": "gk61",
+            "url": 'vmarquar.544phcrs'},
+            {"id": "gk62",
+            "url": 'vmarquar.57k6qz5b'},
+            {"id": "gk63",
+            "url": 'vmarquar.d89tliv9'},
+            {"id": "gk64",
+            "url": 'vmarquar.26jtby3p'},
+            {"id": "gk65",
+            "url": 'vmarquar.8lr0mfgz'},
+            {"id": "gk66",
+            "url": 'vmarquar.31hv4a1h'},
+            {"id": "gk67",
+            "url": 'vmarquar.4u15o14j'},
+            {"id": "gk68",
+            "url": 'vmarquar.c3hpgx6m'},
+            {"id": "gk70",
+            "url": 'vmarquar.25pwzibc'},
+            {"id": "gk69",
+            "url": 'vmarquar.csckkose'},
+            {"id": "gk71",
+            "url": 'vmarquar.3xenk4ue'},
+            {"id": "gk72",
+            "url": 'vmarquar.bi48w0mi'},
+            {"id": "gk73",
+            "url": 'vmarquar.9u6pphsy'},
+            {"id": "gk74",
+            "url": 'vmarquar.8em4bfgp'},
+            {"id": "gk75",
+            "url": 'vmarquar.7zu9vfg8'},
+            {"id": "gk76",
+            "url": 'vmarquar.85t0nbfu'},
+            {"id": "gk77",
+            "url": 'vmarquar.9xlnbw4j'},
+            {"id": "gk78",
+            "url": 'vmarquar.ctnkk5uh'},
+            {"id": "gk79",
+            "url": 'vmarquar.atv28zg5'},
+            {"id": "gk80",
+            "url": 'vmarquar.6tfd0pw4'},
+            {"id": "gk81",
+            "url": 'vmarquar.7vuljlw9'},
+            {"id": "gk82",
+            "url": 'vmarquar.986kr9v5'},
+            {"id": "gk83",
+            "url": 'vmarquar.af4cuw8v'},
+            {"id": "gk84",
+            "url": 'vmarquar.7cdh6i37'},
+            {"id": "gk85",
+            "url": 'vmarquar.5q5h5q4t'},
+            {"id": "gk86",
+            "url": 'vmarquar.4ma7lvr1'}];
+
+var addGK25 = function(gks) {
+
+  for (var id in gks) {
+       if (gks.hasOwnProperty(id)) {
+          map.addSource(gks[id].id, {
+              "type": "raster",
+              "url": "mapbox://"+gks[id].url,
+              "tileSize": 256
+          });
+          map.addLayer({
+            "id": gks[id].id,
+            "type": "raster",
+            "source": gks[id].id,
+            "minzoom": 7,
+            "maxzoom": 17,
+            'layout': {
+                'visibility': 'none'
+            }
+          });
+
+       }
+    }
+
+};
+
+var toggleVisibility = function(gks){
+  var visibility = map.getLayoutProperty(gks[0].id, 'visibility');
+    for (var id in gks) {
+        if (visibility === 'visible') {
+            map.setLayoutProperty(gks[id].id, 'visibility', 'none');
+        } else {
+            map.setLayoutProperty(gks[id].id, 'visibility', 'visible');
+        }
+    }
+};
+
+map.on('load', function() {
+    addGK25(gks);
+    map.addSource('CC200_Polygon', {
+        "type": "vector",
+        "url": "mapbox://vmarquar.1rljpu70"
+    });
+
+    map.addSource('GK25_Polygon', {
+        "type": "vector",
+        "url": "mapbox://vmarquar.3j8btgs6"
+    });
+
+    map.addLayer({
+        "id": 'GK25_Polygon',
+        'type': 'fill',
+        'source': "GK25_Polygon",
+        "source-layer": "Haupteinheiten_3857",
+        'paint': {
+           'fill-color': '#088',
+           'fill-opacity': 0.000001,
+       },
+       'layout': {
+           'visibility': 'none'
+       }
+
+    });
+    //Haupteinheiten_3857
+
+
+
+    map.on('mousemove', function(e) {
+        // Change the cursor style as a UI indicator.
+        map.getCanvas().style.cursor = 'pointer';
+        var features = map.queryRenderedFeatures(e.point);
+        // Single out the first found feature.
+        var feature = features[0];
+        var blattnr = document.createElement('strong');
+        // Render found features in an overlay.
+        overlay.innerHTML = '';
+
+        if(feature.layer.id === 'CC200_Polygon'){
+            // Gewässer Exception
+            if(!(feature.properties.T1_PETHTXT === 'Gewässer')){
+
+              if (feature.properties.T1_BLATTNU && feature.properties.T1_BLATTNA){
+                blattnr.textContent = feature.properties.T1_BLATTNU + ' '+ feature.properties.T1_BLATTNA;
+              } else {
+                blattnr.textContent = '-'
+              }
+              var kuerzel = document.createElement('div');
+              kuerzel.textContent = 'Schichtkürzel: ' + feature.properties.T1_KUERZEL;
+
+              var stratigraphie = document.createElement('div');
+              if (!feature.properties.T1_MATBEZ===feature.properties.T1_SYSTEM){
+                stratigraphie.textContent = 'Stratigraphie: ' + feature.properties.T1_MATBEZ + ', '+feature.properties.T1_SYSTEM;
+              } else {
+                stratigraphie.textContent = 'Stratigraphie: ' + feature.properties.T1_MATBEZ;
+              }
+
+              var genese = document.createElement('div');
+              genese.textContent = 'Genese: ' + feature.properties.T1_GENTXT;
+
+              var petrographie = document.createElement('div');
+              petrographie.textContent = 'Petrographie: ' + feature.properties.T1_PETHTXT;
+
+              overlay.appendChild(blattnr);
+              overlay.appendChild(kuerzel);
+              overlay.appendChild(stratigraphie);
+              overlay.appendChild(genese);
+              overlay.appendChild(petrographie);
+
+            } else {
+              // Gewässer Ausnahme!
+              var petrographie = document.createElement('strong');
+              petrographie.textContent = feature.properties.T1_PETHTXT;
+              overlay.appendChild(petrographie);
+            }
+
+
+        } else if (feature.layer.id === 'GK25_Polygon'){
+
+          if(!(feature.properties.GK25_ID === '-')){
+            blattnr.textContent = 'Blatt Nr: GK25 '+feature.properties.GK25_ID.split('-', 1);
+            overlay.appendChild(blattnr);
+            var placeholder = document.createElement('div');
+            overlay.appendChild(placeholder);
+          }
+
+          var kuerzel_name = document.createElement('b');
+          var kuerzel_inhalt = document.createElement('div');
+          kuerzel_inhalt.className = 'inlineText';
+          kuerzel_name.textContent = 'Schichtkürzel: ';
+          kuerzel_inhalt.textContent = feature.properties.L_LEG_KUER;
+          overlay.appendChild(kuerzel_name);
+          overlay.appendChild(kuerzel_inhalt);
+
+          var schichtname = document.createElement('div');
+          var schichtname_name = document.createElement('b');
+          var schichtname_inhalt = document.createElement('div');
+          //schichtname_inhalt.className = 'inlineText';
+          schichtname_name.textContent = 'Schichtname: '
+          schichtname_inhalt.textContent =feature.properties.L_LEG_KURZ;
+          overlay.appendChild(schichtname);
+          overlay.appendChild(schichtname_name);
+          overlay.appendChild(schichtname_inhalt);
+
+          if(!(feature.properties.L_LEG_LANG === "no data")){
+            var petrographie = document.createElement('div');
+            var petrographie_name = document.createElement('b');
+            var petrographie_inhalt = document.createElement('div');
+            petrographie_name.textContent = 'Petrographie: ';
+            petrographie_inhalt.textContent = feature.properties.L_LEG_LANG;
+            overlay.appendChild(petrographie_name);
+            overlay.appendChild(petrographie_inhalt);
+          }
+
+          if(!(feature.properties.L_LEG_OBER === "no data")){
+            var serie = document.createElement('div');
+            var serie_name = document.createElement('b');
+            var serie_inhalt = document.createElement('div');
+            serie_name.textContent = 'Serie: ';
+            serie_inhalt.textContent = feature.properties.L_LEG_OBER;
+            overlay.appendChild(serie_name);
+            overlay.appendChild(serie_inhalt);
+          }
+
+
+
+          if(!(feature.properties.L_LEG_ZUSA === "no data")){
+            var zusatz_name = document.createElement('b');
+            var zusatz_inhalt = document.createElement('div');
+            zusatz_name.textContent = 'Zusatzinformation: ';
+            zusatz_inhalt.textContent = feature.properties.L_LEG_ZUSA;
+            overlay.appendChild(zusatz_name);
+            overlay.appendChild(zusatz_inhalt);
+          }
+
+          if (!(feature.properties.L_TEKTONIK === "no data")){
+          var tekt_einheit_name = document.createElement('b');
+          var tekt_einheit_inhalt = document.createElement('div');
+          tekt_einheit_name.textContent = 'Tektonische Einheit: ' ;
+          tekt_einheit_inhalt.textContent = feature.properties.L_TEKTONIK;
+          overlay.appendChild(tekt_einheit_name);
+          overlay.appendChild(tekt_einheit_inhalt);
+        };
+
+          if (!(feature.properties.L_STRATIGR === "no data")){
+          var stratigraphie_name = document.createElement('b');
+          var stratigraphie_inhalt = document.createElement('div');
+          stratigraphie_name.textContent = 'Stratigraphie: ' ;
+          stratigraphie_inhalt.textContent = feature.properties.L_STRATIGR;
+          overlay.appendChild(stratigraphie_name);
+          overlay.appendChild(stratigraphie_inhalt);
+        };
+
+
+        }
+        console.log( JSON.stringify(feature, null, 2));
+        overlay.style.display = 'block';
+
+    }); // on mousemove
+
+  }); // on load
+
+
+var overlay = document.getElementById('map-overlay');
+
+var draw = new MapboxDraw({
+    displayControlsDefault: false,
+    controls: {
+        polygon: true,
+        trash: true
+    }
+});
+
+var geocoder =   new MapboxGeocoder({
+      accessToken: mapboxgl.accessToken
+  });
+
+
+
+// var locationTracker = new mapboxgl.GeolocateControl({
+//     positionOptions: {
+//         enableHighAccuracy: true
+//     },
+//     trackUserLocation: true
+//   });
+
+
+
+class LayerControl {
+  onAdd(map){
+    this.map = map;
+    this.container = document.createElement('div');
+    this.container.className = 'mapboxgl-ctrl-group mapboxgl-ctrl';
+    var button = document.createElement('button');
+    button.className = 'mapbox-gl-draw_ctrl-draw-btn btn-gk25';
+    button.onclick = function(){
+      if(button.classList.contains("active")){
+        // remove GK25
+        toggleVisibility(gks);
+        map.setLayoutProperty("GK25_Polygon", 'visibility', 'none');
+        button.className = 'mapbox-gl-draw_ctrl-draw-btn btn-gk25';
+        console.log("button is active!")
+      } else{
+        // add GK25
+        toggleVisibility(gks);
+        map.setLayoutProperty("GK25_Polygon", 'visibility', 'visible');
+        button.className = 'mapbox-gl-draw_ctrl-draw-btn btn-gk25 active';
+        console.log("button is INACTIVE!")
+
+      };
+      //switchLayer()
+      // TODO: bei inactive : GK25 aktivieren > active class setzen
+      //      bei active: GK25 deaktivieren > deactive class setzen /bzw. standard fall / active class entfernen
+
+    };
+    this.container.appendChild(button);
+    return this.container;
+  }
+  onRemove(){
+    this.container.parentNode.removeChild(this.container);
+    this.map = undefined;
+  }
+
+}
+
+
+
+const layerControl = new LayerControl();
+
+
+
+
+
+// Add geolocate control to the map.
+map.addControl(geocoder);
+map.addControl(draw);
+map.addControl(layerControl);
+
+// map.addControl(locationTracker);
+
+map.on('draw.create', updateArea);
+map.on('draw.delete', updateArea);
+map.on('draw.update', updateArea);
+
+var calcbox = document.getElementById("calculationbox");
+
+function updateArea(e) {
+    var data = draw.getAll();
+    var answer = document.getElementById('calculated-area');
+    calcbox.style.display = "block";
+
+    if (data.features.length > 0) {
+        var area = turf.area(data);
+        area = area / 1000000; // convert to square kilometers
+        // restrict to area to 2 decimal points
+        var rounded_area = Math.round(area*100)/100;
+        answer.innerHTML = '<p><strong>' + rounded_area + ' km <sup>2</sup></strong></p>';
+    } else {
+
+        answer.innerHTML = '';
+        if (e.type !== 'draw.delete') alert("Use the draw tools to draw a polygon!");
+        calcbox.style.display = "none";
+
+    }
+}
+
+</script>
+
+</body>
+</html>
