@@ -7,9 +7,5 @@
     "howTO": "echo 'start script with npm run packOSX'",
     "packOSX": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=assets/icons/icon.icns",
     "packWIN32": "electron-packager . Faros-Map --overwrite --platform=win32 --arch=ia32 --icon=assets/icons/icon.ico"
-  },
-  "devDependencies": {
-    "electron": "1.8.2",
-    "electron-packager": "^11.1.0"
   }
 }
